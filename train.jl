@@ -27,21 +27,22 @@ STATE_SIZE = 4
 ACTION_SIZE = 2
 MIN_RANGE = -2.0f0
 MAX_RANGE = 2.0f0
-EPISODE_LENGTH = 100
+EPISODE_LENGTH = 500
 TEST_STEPS = 10000
+REWARD_SCALING = 1.0 # 16.2736044
 # Policy parameters #
 η = 3e-4 # Learning rate
 STD = 0.0 # Standard deviation
-HIDDEN_SIZE = 256
+HIDDEN_SIZE = 30
 # GAE parameters
 γ = 0.99
 λ = 0.95
 # Optimization parameters
 PPO_EPOCHS = 10
 NUM_EPISODES = 15000
-BATCH_SIZE = 5
+BATCH_SIZE = 256
 c₀ = 1.0
-c₁ = 0.5
+c₁ = 1.0
 c₂ = 0.001
 # PPO parameters
 ϵ = 0.2
@@ -58,7 +59,7 @@ value_l = 0.0
 
 #---------Scale rewards-------#
 function scale_rewards(rewards)
-    return rewards # ./ 16.2736044
+    return rewards  ./ REWARD_SCALING
 end
 
 """
@@ -164,7 +165,12 @@ function gae(states,actions,rewards,next_states)
     Â = []
     A = 0.0
     for i in reverse(1:length(states))
-        δ = rewards[i] + γ*cpu.(value(next_states[i]).data[1]) - cpu.(value(states[i]).data[1])
+        if length(states) < EPISODE_LENGTH && i == length(states)
+            δ = rewards[i] - cpu.(value(states[i]).data[1])
+        else
+            δ = rewards[i] + γ*cpu.(value(next_states[i]).data[1]) - cpu.(value(states[i]).data[1])
+        end
+
         A = δ + (γ*λ*A)
         push!(Â,A)
     end
@@ -359,7 +365,7 @@ Train
 function train_step()    
     routs = get_rollouts()
     states,actions,rewards,advantages,returns,log_probs = process_rollouts(routs)
-    
+
     idxs = partition(1:size(states)[end],BATCH_SIZE)
     
     for epoch in 1:PPO_EPOCHS
