@@ -262,11 +262,11 @@ function process_rollouts(rollouts)
         episode_rewards = scale_rewards(episode_rewards)
         episode_advantages = gae(episode_states,episode_actions,episode_rewards,episode_next_states)
         # episode_rewards = normalise(episode_rewards)
-        
+         
         episode_returns = disconunted_returns(episode_rewards)
-        
+         
         push!(episode_mean_returns,mean(episode_returns))
-        
+         
         push!(states,episode_states)
         push!(actions,episode_actions)
         push!(rewards,episode_rewards)
@@ -301,7 +301,7 @@ Loss function definition
 function loss(states,actions,advantages,returns,old_log_probs)
     global global_step,policy_l,entropy_l,value_l
     global_step += 1
-    
+     
     if MODE == "CON"
         μ = policy_μ(states)
         logΣ = policy_Σ 
@@ -309,6 +309,9 @@ function loss(states,actions,advantages,returns,old_log_probs)
         new_log_probs = normal_log_prob(μ,logΣ,actions)
     else
         action_probs = policy(states) # ACTION_SIZE x BATCH_SIZE
+	# println("")
+	# println(size(action_probs))
+	# println(action_probs)
         actions_one_hot = zeros(ACTION_SIZE,size(action_probs)[end])
         
         for i in 1:size(action_probs)[end]
