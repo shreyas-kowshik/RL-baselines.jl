@@ -17,16 +17,18 @@ using Base.Iterators
 using BSON:@save,@load
 using JLD
 
-env_name = "CartPole-v0"
-MODE = "CAT"
-ACTION_SIZE = 2
-TEST_STEPS = 50000
+env_name = "Pendulum-v0"
+MODE = "CON"
+ACTION_SIZE = 1
+TEST_STEPS = 1
 global steps_run = 0
 
 # Load the policy
 if MODE == "CON"
     @load "./weights/policy_mu.bson" policy_μ
     @load "./weights/policy_sigma.bson" policy_Σ
+    println("\n\n\n")
+    println(policy_Σ)
 else
     @load "./weights/policy_cat.bson" policy
 end
@@ -42,7 +44,7 @@ function test_run(env)
             println("Resetting...")
             s = reset!(env)
         end
-        OpenAIGym.render(env)
+        # OpenAIGym.render(env)
 
         if MODE == "CON"
             a = policy_μ(s).data
@@ -53,7 +55,8 @@ function test_run(env)
             action_probs = reshape(action_probs,ACTION_SIZE)
             a = sample(1:ACTION_SIZE,Weights(action_probs)) - 1
         end
-
+	
+	println(a)
         r,s_ = step!(env,a)
         ep_r += r
 	steps_run += 1
@@ -80,4 +83,7 @@ if MODE == "CAT"
 	println("Minimum : $(minimum(ret))")
 	println("Maximum : $(maximum(ret))")
 	println("Mean : $(mean(ret))")
+else
+	r = test_run(env)	
+	println("---Total Steps : $steps_run ::: Total Reward : $r---")
 end

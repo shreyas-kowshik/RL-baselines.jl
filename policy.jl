@@ -53,7 +53,7 @@ function categorical_policy(STATE_SIZE,HIDDEN_SIZE,ACTION_SIZE)
 end
 
 function value_fn(STATE_SIZE,HIDDEN_SIZE,ACTION_SIZE,activation_fn=relu)
-	value = Chain(Dense(STATE_SIZE,HIDDEN_SIZE,activation_fn),
-                  Dense(HIDDEN_SIZE,HIDDEN_SIZE,activation_fn),
-                  Dense(HIDDEN_SIZE,1))
+	value = Chain(Dense(STATE_SIZE,HIDDEN_SIZE,activation_fn;initW=_random_normal),
+                  Dense(HIDDEN_SIZE,HIDDEN_SIZE,activation_fn;initW=_random_normal),
+                  Dense(HIDDEN_SIZE,1;initW=_random_normal))
 end
