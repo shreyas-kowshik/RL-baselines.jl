@@ -10,6 +10,7 @@ using Distributed
 using Distributions
 using LinearAlgebra
 using Base.Iterators
+using Random
 using BSON:@save,@load
 using JLD
 
@@ -19,17 +20,17 @@ include("policy.jl")
 HYPERPARAMETERS
 """
 # Environment Creation #
-env_name = "CartPole-v0"
-MODE = "CAT" # Can be either "CON" (Continuous) or "CON" (Categorical)
+env_name = "Pendulum-v0"
+MODE = "CON" # Can be either "CON" (Continuous) or "CON" (Categorical)
 
 # Environment Variables #
-STATE_SIZE = 4
-ACTION_SIZE = 2
+STATE_SIZE = 3
+ACTION_SIZE = 1
 MIN_RANGE = -2.0f0
 MAX_RANGE = 2.0f0
-EPISODE_LENGTH = Int64(1e8)
+EPISODE_LENGTH = 2000
 TEST_STEPS = 10000
-REWARD_SCALING = 1.0 # 16.2736044
+REWARD_SCALING = 16.2736044
 # Policy parameters #
 η = 3e-4 # Learning rate
 STD = 0.0 # Standard deviation
@@ -59,7 +60,7 @@ value_l = 0.0
 
 #---------Scale rewards-------#
 function scale_rewards(rewards)
-    return rewards  ./ REWARD_SCALING
+    return (rewards  ./ REWARD_SCALING) .+ 2.0f0
 end
 
 function normalise(arr)
@@ -137,7 +138,7 @@ end
 Multi-threaded parallel rollout collection
 """
 
-num_processes = 9
+num_processes = 16 
 addprocs(num_processes) 
 
 @everywhere function collect(env)
@@ -146,6 +147,7 @@ end
 
 @everywhere function rollout()
   env = GymEnv(env_name)
+  env.pyenv._max_episode_steps = EPISODE_LENGTH
   return collect(env)
 end
 
@@ -375,8 +377,8 @@ function train_step()
     routs = get_rollouts()
     states,actions,rewards,advantages,returns,log_probs = process_rollouts(routs)
 
-    idxs = partition(1:size(states)[end],BATCH_SIZE)
-    
+    idxs = partition(shuffle(1:size(states)[end]),BATCH_SIZE)
+      
     for epoch in 1:PPO_EPOCHS
         for i in idxs
             mb_states = states[:,i] 
