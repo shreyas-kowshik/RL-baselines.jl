@@ -20,7 +20,7 @@ using JLD
 env_name = "Pendulum-v0"
 MODE = "CON"
 ACTION_SIZE = 1
-TEST_STEPS = 1
+TEST_STEPS = 50000 
 global steps_run = 0
 
 # Load the policy
