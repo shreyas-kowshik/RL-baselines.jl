@@ -1,7 +1,6 @@
 # Proximal Policy Optimization
 
-![Sample]
-(docs/pendulum.gif)
+![Sample](docs/pendulum.gif)
 
 An implementation of Proximal Policy Optimization in julia.
 
@@ -33,11 +32,9 @@ julia plot.jl
 
 ## Results
 
-![CartPole]
-(docs/cartople.gif)
+![CartPole](docs/cartpole.gif)
 
-![Pendulum]
-(docs/pendulum.git)
+![Pendulum](docs/pendulum.gif)
 
 ## Hyperparameters
 
