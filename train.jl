@@ -1,4 +1,4 @@
-using Flux, CuArrays
+using Flux
 using OpenAIGym
 import Reinforce.action
 import Reinforce:run_episode
