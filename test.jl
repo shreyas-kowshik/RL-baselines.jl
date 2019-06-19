@@ -17,9 +17,9 @@ using Base.Iterators
 using BSON:@save,@load
 using JLD
 
-env_name = "CartPole-v0"
-MODE = "CAT"
-ACTION_SIZE = 2
+env_name = "Pendulum-v0"
+MODE = "CON"
+ACTION_SIZE = 1
 TEST_STEPS = 50000
 global steps_run = 0
 
@@ -38,7 +38,7 @@ function test_run(env)
     
     s = reset!(env)
     for i in 1:TEST_STEPS
-        if i % 1000000 == 0
+        if i % 10000 == 0
             println("Resetting...")
             s = reset!(env)
         end
@@ -80,4 +80,7 @@ if MODE == "CAT"
 	println("Minimum : $(minimum(ret))")
 	println("Maximum : $(maximum(ret))")
 	println("Mean : $(mean(ret))")
+else
+	r = test_run(env)
+	println("---Total Steps : $steps_run ::: Total Reward : $r---")
 end
