@@ -27,7 +27,7 @@ STATE_SIZE = 4
 ACTION_SIZE = 2
 MIN_RANGE = -2.0f0
 MAX_RANGE = 2.0f0
-EPISODE_LENGTH = 500
+EPISODE_LENGTH = 1000
 TEST_STEPS = 10000
 REWARD_SCALING = 1.0 # 16.2736044
 # Policy parameters #
@@ -39,7 +39,7 @@ HIDDEN_SIZE = 30
 λ = 0.95
 # Optimization parameters
 PPO_EPOCHS = 10
-NUM_EPISODES = 15000
+NUM_EPISODES = 100000
 BATCH_SIZE = 256
 c₀ = 1.0
 c₁ = 1.0
@@ -60,6 +60,10 @@ value_l = 0.0
 #---------Scale rewards-------#
 function scale_rewards(rewards)
     return rewards  ./ REWARD_SCALING
+end
+
+function normalise(arr)
+    (arr .- mean(arr))./(sqrt(var(arr) + 1e-10))
 end
 
 """
@@ -261,7 +265,8 @@ function process_rollouts(rollouts)
         
         episode_rewards = scale_rewards(episode_rewards)
         episode_advantages = gae(episode_states,episode_actions,episode_rewards,episode_next_states)
-        # episode_rewards = normalise(episode_rewards)
+        episode_advantages = normalise(episode_advantages)
+	# episode_rewards = normalise(episode_rewards)
          
         episode_returns = disconunted_returns(episode_rewards)
          
@@ -393,7 +398,7 @@ function train()
         # Anneal learning rate
         if i%300 == 0
             if opt.eta > 1e-6
-                opt.eta = opt.eta / 3.0
+                opt.eta = opt.eta / 1.0
             end
         end
         
