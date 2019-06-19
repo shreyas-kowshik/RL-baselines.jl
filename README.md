@@ -1,5 +1,8 @@
 # Proximal Policy Optimization
 
+![Sample]
+(docs/pendulum.gif)
+
 An implementation of Proximal Policy Optimization in julia.
 
 Tested environments : 
@@ -13,13 +16,13 @@ CartPole-v0 Pendulum-v0
 <b>Training</b>
 
 ```
-julia train.jl
+julia --project=Project.toml train.jl
 ```
 
 <b>Testing</b>
 
 ```
-julia test.jl
+julia --project=Project.toml test.jl
 ```
 
 <b>Plot Rewards</b>
@@ -27,6 +30,14 @@ julia test.jl
 ```
 julia plot.jl
 ```
+
+## Results
+
+![CartPole]
+(docs/cartople.gif)
+
+![Pendulum]
+(docs/pendulum.git)
 
 ## Hyperparameters
 

@@ -17,9 +17,9 @@ using Base.Iterators
 using BSON:@save,@load
 using JLD
 
-env_name = "Pendulum-v0"
-MODE = "CON"
-ACTION_SIZE = 1
+env_name = "CartPole-v0"
+MODE = "CAT"
+ACTION_SIZE = 2
 TEST_STEPS = 50000 
 global steps_run = 0
 
