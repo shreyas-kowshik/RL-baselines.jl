@@ -44,7 +44,7 @@ function test_run(env)
             println("Resetting...")
             s = reset!(env)
         end
-        # OpenAIGym.render(env)
+        OpenAIGym.render(env)
 
         if MODE == "CON"
             a = policy_μ(s).data
@@ -56,7 +56,6 @@ function test_run(env)
             a = sample(1:ACTION_SIZE,Weights(action_probs)) - 1
         end
 	
-	println(a)
         r,s_ = step!(env,a)
         ep_r += r
 	steps_run += 1
