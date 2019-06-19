@@ -42,7 +42,7 @@ function test_run(env)
             println("Resetting...")
             s = reset!(env)
         end
-        # OpenAIGym.render(env)
+        OpenAIGym.render(env)
 
         if MODE == "CON"
             a = policy_μ(s).data
@@ -69,5 +69,15 @@ end
 env = GymEnv(env_name)
 env.pyenv._max_episode_steps = TEST_STEPS
 
-r = test_run(env)
-println("---Total Steps : $steps_run ::: Total Reward : $r---")
+if MODE == "CAT"
+	ret = []
+	for _ in 1:100
+		r = test_run(env)
+		println("---Total Steps : $steps_run ::: Total Reward : $r---")
+		push!(ret,r)
+	end
+	
+	println("Minimum : $(minimum(ret))")
+	println("Maximum : $(maximum(ret))")
+	println("Mean : $(mean(ret))")
+end
