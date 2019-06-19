@@ -26,8 +26,6 @@ MODE = "CON" # Can be either "CON" (Continuous) or "CON" (Categorical)
 # Environment Variables #
 STATE_SIZE = 3
 ACTION_SIZE = 1
-MIN_RANGE = -2.0f0
-MAX_RANGE = 2.0f0
 EPISODE_LENGTH = 2000
 TEST_STEPS = 10000
 REWARD_SCALING = 16.2736044
