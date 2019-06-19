@@ -2,7 +2,7 @@
 
 ![Sample](docs/pendulum.gif)
 
-An implementation of Proximal Policy Optimization in julia.
+An implementation of [Proximal Policy Optimization](https://arxiv.org/pdf/1707.06347.pdf) in julia.
 
 Tested environments : 
 
