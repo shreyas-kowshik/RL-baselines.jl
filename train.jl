@@ -27,7 +27,7 @@ STATE_SIZE = 4
 ACTION_SIZE = 2
 MIN_RANGE = -2.0f0
 MAX_RANGE = 2.0f0
-EPISODE_LENGTH = 1000
+EPISODE_LENGTH = Int64(1e8)
 TEST_STEPS = 10000
 REWARD_SCALING = 1.0 # 16.2736044
 # Policy parameters #
@@ -170,6 +170,7 @@ function gae(states,actions,rewards,next_states)
     A = 0.0
     for i in reverse(1:length(states))
         if length(states) < EPISODE_LENGTH && i == length(states)
+	    println("CASE")
             δ = rewards[i] - cpu.(value(states[i]).data[1])
         else
             δ = rewards[i] + γ*cpu.(value(next_states[i]).data[1]) - cpu.(value(states[i]).data[1])

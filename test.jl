@@ -21,6 +21,7 @@ env_name = "CartPole-v0"
 MODE = "CAT"
 ACTION_SIZE = 2
 TEST_STEPS = 50000
+global steps_run = 0
 
 # Load the policy
 if MODE == "CON"
@@ -32,6 +33,7 @@ end
 
 # Test Run Function
 function test_run(env)
+    global steps_run 
     ep_r = 0.0
     
     s = reset!(env)
@@ -40,7 +42,7 @@ function test_run(env)
             println("Resetting...")
             s = reset!(env)
         end
-        OpenAIGym.render(env)
+        # OpenAIGym.render(env)
 
         if MODE == "CON"
             a = policy_μ(s).data
@@ -54,7 +56,8 @@ function test_run(env)
 
         r,s_ = step!(env,a)
         ep_r += r
-        
+	steps_run += 1
+
         s = s_
         if env.done
            break 
@@ -67,4 +70,4 @@ env = GymEnv(env_name)
 env.pyenv._max_episode_steps = TEST_STEPS
 
 r = test_run(env)
-println("---Total Steps : $TEST_STEPS ::: Total Reward : $r---")
+println("---Total Steps : $steps_run ::: Total Reward : $r---")
