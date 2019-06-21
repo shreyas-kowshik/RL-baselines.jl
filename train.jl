@@ -21,7 +21,7 @@ HYPERPARAMETERS
 """
 # Environment Creation #
 env_name = "Pendulum-v0"
-MODE = "CON" # Can be either "CON" (Continuous) or "CON" (Categorical)
+MODE = "CON" # Can be either "CON" (Continuous) or "CAT" (Categorical)
 
 # Environment Variables #
 STATE_SIZE = 3
