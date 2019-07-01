@@ -178,6 +178,40 @@ function entropy(policy,states::Array)
     end
 end
 
+function kl_divergence(policy,kl_params,states::Array)
+    """
+    kl_params:
+        - old_log_probs : CategoricalPolicy
+        - Array([μ,logΣ]) : DiagonalGaussianPolicy
+    """
+
+    if typeof(policy) <: CategoricalPolicy
+        old_log_probs = hcat(cat(kl_params...,dims=1)...)
+
+        action_probs = policy.π(states)
+        log_probs = log.(action_probs)
+
+        log_ratio = log_probs .- old_log_probs
+        kl_div = (exp.(old_log_probs)) .* log_ratio
+        
+        return sum(kl_div,dims=1)
+    
+    elseif typeof(policy) <: DiagonalGaussianPolicy
+        μ0 = policy.μ(states)
+        logΣ0 = policy.logΣ
+        μ1 = mus = hcat([kl_params[i][1] for i in 1:length(kl_params)]...)
+        logΣ1 = hcat([kl_params[i][2] for i in 1:length(kl_params)]...)
+
+        var0 = exp.(2 .* logΣ0)
+        var1 = exp.(2 .* logΣ1)
+        pre_sum = 0.5 .* (((μ0 .- μ1).^2 .+ var0) ./ (var1 .+ 1e-8) .- 1.0f0) .+ logΣ1 .- logΣ0
+        kl = sum(pre_sum,dims=1)
+        return kl
+    else
+        error("Not implemented")
+    end
+end
+
 function get_policy_params(policy)
     if typeof(policy) <: CategoricalPolicy
         return params(policy.π)
