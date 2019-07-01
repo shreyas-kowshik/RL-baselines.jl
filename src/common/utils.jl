@@ -47,3 +47,88 @@ function disconunted_returns(rewards::Array;γ=0.99)
     returns = reverse(returns)
     returns
 end
+
+"""
+Flatten gradients and model parameters
+"""
+
+function get_flat_grads(gradients,models)
+    """
+    Flattens out the gradients and concatenates them
+
+    models : An array of models whose parameter gradients are to be falttened
+    
+    Returns : Tracker Array of shape (NUM_PARAMS,1)
+    """
+
+    flat_grads = []
+
+    function flatten!(p)
+        if typeof(p) <: TrackedArray
+            prod_size = prod(size(p))
+            push!(flat_grads,reshape(gradients[p],prod_size))
+        end
+    end
+    
+    for model in models
+        mapleaves(flatten!,model)
+    end
+    
+    flat_grads = cat(flat_grads...,dims=1)
+    flat_grads = reshape(flat_grads,length(flat_grads),1)
+    
+    return flat_grads
+end
+
+function get_flat_params(models)
+    """
+    Flattens out the parameters and concatenates them
+
+    models : An array of models whose parameters are to be falttened
+    
+    Returns : Tracker Array of shape (NUM_PARAMS,1)
+    """
+
+    flat_params = []
+    
+    function flatten!(p)
+        if typeof(p) <: TrackedArray
+            prod_size = prod(size(p))
+            push!(flat_params,reshape(p,prod_size))
+        end
+    end
+    
+    for model in models
+        mapleaves(flatten!,model)
+    end
+    
+    flat_params = cat(flat_params...,dims=1)
+    flat_params = reshape(flat_params,length(flat_params),1)
+    
+    return flat_params
+end
+
+function set_flat_params(parameters,models)
+    """
+    Sets values of `parameters` to the `model`
+    
+    parameters : flattened out array of model parameters
+    models : an array of models whose parameters are to be set
+    """
+    ptr = 1
+    
+    function assign!(p)
+        if typeof(p) <: TrackedArray
+            prod_size = prod(size(p))
+            
+            p.data .= Float32.(reshape(parameters[ptr : ptr + prod_size - 1,:],size(p)...)).data
+            ptr += prod_size
+        end
+    end
+    
+    for model in models
+        mapleaves(assign!,model)
+    end
+    
+    print("")
+end
