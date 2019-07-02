@@ -30,7 +30,7 @@ addprocs(num_processes)
 end
 
 @everywhere function episode(policy,num_steps::Int)
-  env = make(policy.env_wrap.ENV_NAME,:human_pane)
+  env = make(policy.env_wrap.ENV_NAME,:rgb)
   env.max_episode_steps = num_steps
   return collect(policy,env,num_steps::Int)
 end

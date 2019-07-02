@@ -8,8 +8,8 @@ struct EnvWrap{T,V,W}
 end
 
 function EnvWrap(env_name::String)
-    env = make(env_name,:human_pane)
-
+    env = make(env_name,:rgb)
+    
     if typeof(env._env.observation_space) <: Gym.Space.Discrete
         STATE_SIZE = env._env.observation_space.n
     elseif typeof(env._env.observation_space) <: Gym.Space.Box
