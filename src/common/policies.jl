@@ -291,3 +291,27 @@ function save_policy(policy,path = nothing)
 
     println("Saved...")
 end
+
+function load_policy(env_wrap::EnvWrap)
+    if typeof(env_wrap.env._env.action_space) <: Gym.Space.Discrete
+        policy = CategoricalPolicy(env_wrap)
+        @load "../weights/policy_cat.bson" π
+        policy.π = π
+
+        println("Loaded")
+        return policy
+
+    elseif typeof(env_wrap.env._env.action_space) <: Gym.Space.Box
+        policy = DiagonalGaussianPolicy(env_wrap)
+        @load "../weights/policy_mu.bson" μ
+        @load "../weights/policy_sigma.bson" logΣ
+        policy.μ = copy(μ)
+        policy.logΣ = copy(logΣ)
+        
+        println("Loaded")
+        return policy
+
+    else
+        error("Environment type not supported")
+    end
+end
