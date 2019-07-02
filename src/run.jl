@@ -22,7 +22,7 @@ include("common/policies.jl")
 include("common/utils.jl")
 
 ENV_NAME = "Pendulum-v0"
-TEST_STEPS = 10000
+TEST_STEPS = 50000
 global steps_run = 0
 
 # Define policy
@@ -35,7 +35,7 @@ policy = load_policy(env_wrap)
 # Test Run Function
 function test_run(env)
 	global steps_run
-	testmode!(env)
+	# testmode!(env)
     ep_r = 0.0
     
     s = reset!(env)
@@ -43,8 +43,10 @@ function test_run(env)
         render!(env)
         a = action(policy,s)
         s_,r,_ = step!(env,a)
-        
+
         ep_r += r
+        println(ep_r)
+        
 		steps_run += 1
 
         s = s_
