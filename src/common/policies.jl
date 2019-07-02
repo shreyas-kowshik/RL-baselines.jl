@@ -292,10 +292,16 @@ function save_policy(policy,path = nothing)
     println("Saved...")
 end
 
-function load_policy(env_wrap::EnvWrap)
+function load_policy(env_wrap::EnvWrap,path = nothing)
     if typeof(env_wrap.env._env.action_space) <: Gym.Space.Discrete
         policy = CategoricalPolicy(env_wrap)
-        @load "../weights/policy_cat.bson" π
+
+        if path == nothing
+            @load "../weights/policy_cat.bson" π
+        else
+            @load string("policy_cat.bson") π
+        end
+
         policy.π = π
 
         println("Loaded")
@@ -303,11 +309,18 @@ function load_policy(env_wrap::EnvWrap)
 
     elseif typeof(env_wrap.env._env.action_space) <: Gym.Space.Box
         policy = DiagonalGaussianPolicy(env_wrap)
-        @load "../weights/policy_mu.bson" μ
-        @load "../weights/policy_sigma.bson" logΣ
-        policy.μ = copy(μ)
-        policy.logΣ = copy(logΣ)
-        
+
+        if path == nothing
+            @load "../weights/policy_mu.bson" μ
+            @load "../weights/policy_sigma.bson" logΣ
+        else
+            @load string(path,"policy_mu.bson") μ
+            @load string(path,"policy_sigma.bson") logΣ
+        end
+
+        policy.μ = μ
+        policy.logΣ = logΣ
+
         println("Loaded")
         return policy
 
