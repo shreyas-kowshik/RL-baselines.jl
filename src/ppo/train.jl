@@ -20,7 +20,7 @@ using JLD
 
 println("imported")
 
-num_processes = 4
+num_processes = 6
 include("../common/policies.jl")
 include("../common/utils.jl")
 include("../common/buffer.jl")
