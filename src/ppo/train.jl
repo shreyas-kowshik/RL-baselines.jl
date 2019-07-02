@@ -20,7 +20,7 @@ using JLD
 
 println("imported")
 
-num_processes = 1
+num_processes = 4
 include("../common/policies.jl")
 include("../common/utils.jl")
 include("../common/buffer.jl")
@@ -60,7 +60,7 @@ end
 #----------------Hyperparameters----------------#
 # Environment Variables #
 ENV_NAME = "Pendulum-v0"
-EPISODE_LENGTH = 100
+EPISODE_LENGTH = 2000
 # Policy parameters #
 η = 3e-4 # Learning rate
 STD = 0.0 # Standard deviation
@@ -122,23 +122,16 @@ end
 function train_step()    
     clear(episode_buffer)
     states,actions,rewards,advantages,returns,log_probs = collect_and_process_rollouts(policy,episode_buffer,EPISODE_LENGTH,stats_buffer)
-    
-    # idxs = partition(shuffle(1:size(episode_buffer.exp_dict["states"])[end]),BATCH_SIZE)
-    idxs = partition(shuffle(1:size(states)[end]),BATCH_SIZE)
-    
+
+    idxs = partition(shuffle(1:size(episode_buffer.exp_dict["states"])[end]),BATCH_SIZE)
+
     for epoch in 1:PPO_EPOCHS
         for i in idxs
-            # mb_states = episode_buffer.exp_dict["states"][:,i] 
-            # mb_actions = episode_buffer.exp_dict["actions"][:,i] 
-            # mb_advantages = episode_buffer.exp_dict["advantages"][:,i] 
-            # mb_returns = episode_buffer.exp_dict["returns"][:,i] 
-            # mb_log_probs = episode_buffer.exp_dict["log_probs"][:,i]
-            
-            mb_states = states[:,i] 
-            mb_actions = actions[:,i] 
-            mb_advantages = advantages[:,i] 
-            mb_returns = returns[:,i] 
-            mb_log_probs = log_probs[:,i]
+            mb_states = episode_buffer.exp_dict["states"][:,i] 
+            mb_actions = episode_buffer.exp_dict["actions"][:,i] 
+            mb_advantages = episode_buffer.exp_dict["advantages"][:,i] 
+            mb_returns = episode_buffer.exp_dict["returns"][:,i] 
+            mb_log_probs = episode_buffer.exp_dict["log_probs"][:,i]
 
             ppo_update(policy,mb_states,mb_actions,mb_advantages,mb_returns,mb_log_probs)
         end
@@ -150,7 +143,10 @@ function train()
         println(i)
         train_step()
         println(mean(stats_buffer.exp_dict["rollout_returns"]))
-        save_policy(policy)
+
+        if i % SAVE_FREQUENCY == 0
+            save_policy(policy)
+        end
     end
 end
 

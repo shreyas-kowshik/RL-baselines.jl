@@ -99,19 +99,12 @@ function collect_and_process_rollouts(policy,episode_buffer::Buffer,num_steps::I
 
     end
     
-    # episode_buffer.exp_dict["states"] = hcat(cat(states...,dims=1)...)
-    # episode_buffer.exp_dict["actions"] = hcat(cat(actions...,dims=1)...)
-    # episode_buffer.exp_dict["rewards"] = hcat(cat(rewards...,dims=1)...)
-    # episode_buffer.exp_dict["advantages"] = hcat(cat(advantages...,dims=1)...)
-    # episode_buffer.exp_dict["returns"] = hcat(cat(returns...,dims=1)...)
-    # episode_buffer.exp_dict["log_probs"] = hcat(cat(log_probs...,dims=1)...)
-
-    states = hcat(cat(states...,dims=1)...)
-    actions = hcat(cat(actions...,dims=1)...)
-    rewards = hcat(cat(rewards...,dims=1)...)
-    advantages = hcat(cat(advantages...,dims=1)...)
-    returns = hcat(cat(returns...,dims=1)...)
-    log_probs = hcat(cat(log_probs...,dims=1)...)
+    episode_buffer.exp_dict["states"] = hcat(cat(states...,dims=1)...)
+    episode_buffer.exp_dict["actions"] = hcat(cat(actions...,dims=1)...)
+    episode_buffer.exp_dict["rewards"] = hcat(cat(rewards...,dims=1)...)
+    episode_buffer.exp_dict["advantages"] = hcat(cat(advantages...,dims=1)...)
+    episode_buffer.exp_dict["returns"] = hcat(cat(returns...,dims=1)...)
+    episode_buffer.exp_dict["log_probs"] = hcat(cat(log_probs...,dims=1)...)
 
     # Log the statistics
     add(stats_buffer,"rollout_returns",mean(cat(rollout_returns...,dims=1)))
