@@ -61,6 +61,7 @@ end
 # Environment Variables #
 ENV_NAME = "Pendulum-v0"
 EPISODE_LENGTH = 2000
+resume = true
 # Policy parameters #
 η = 3e-4 # Learning rate
 STD = 0.0 # Standard deviation
@@ -83,7 +84,12 @@ global_step = 0
 
 # Define policy
 env_wrap = EnvWrap(ENV_NAME)
-policy = get_policy(env_wrap)
+
+if resume == true
+    policy = load_policy(env_wrap,"../../weights/")
+else
+    policy = get_policy(env_wrap)
+end
 
 # Define buffers
 episode_buffer = initialize_episode_buffer()
