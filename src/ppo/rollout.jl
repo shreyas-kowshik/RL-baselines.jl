@@ -85,29 +85,30 @@ function collect_and_process_rollouts(policy,episode_buffer::Buffer,num_steps::I
         episode_rewards = scale_rewards(policy.env_wrap,episode_rewards)
         episode_advantages = gae(policy,episode_states,episode_actions,episode_rewards,episode_next_states,num_steps)
         episode_advantages = normalise(episode_advantages)
-        
+       	
         episode_returns = disconunted_returns(episode_rewards)
-
-        push!(states,episode_states)
-        push!(actions,episode_actions)
-        push!(rewards,episode_rewards)
-        push!(advantages,episode_advantages)
-        push!(returns,episode_returns)
-
+        
+        push!(states,hcat(episode_states...))
+        push!(actions,hcat(episode_actions...))
+        push!(rewards,hcat(episode_rewards...))
+        push!(advantages,hcat(episode_advantages...))
+        push!(returns,hcat(episode_returns...))
+        
         # Variables for logging
         push!(rollout_returns,episode_returns)
 
     end
-    
-    episode_buffer.exp_dict["states"] = hcat(cat(states...,dims=1)...)
-    episode_buffer.exp_dict["actions"] = hcat(cat(actions...,dims=1)...)
-    episode_buffer.exp_dict["rewards"] = hcat(cat(rewards...,dims=1)...)
-    episode_buffer.exp_dict["advantages"] = hcat(cat(advantages...,dims=1)...)
-    episode_buffer.exp_dict["returns"] = hcat(cat(returns...,dims=1)...)
-    episode_buffer.exp_dict["log_probs"] = hcat(cat(log_probs...,dims=1)...)
+   	
+    # println(size(states[1]))
+    episode_buffer.exp_dict["states"] = hcat(states...)
+    episode_buffer.exp_dict["actions"] = hcat(actions...)
+    episode_buffer.exp_dict["rewards"] = hcat(rewards...)
+    episode_buffer.exp_dict["advantages"] = hcat(advantages...)
+    episode_buffer.exp_dict["returns"] = hcat(returns...)
+    episode_buffer.exp_dict["log_probs"] = hcat(log_probs...)
 
     # Log the statistics
-    add(stats_buffer,"rollout_returns",mean(cat(rollout_returns...,dims=1)))
+    add(stats_buffer,"rollout_returns",mean(hcat(rollout_returns...)))
     
     return states,actions,rewards,advantages,returns,log_probs
 end
