@@ -277,16 +277,16 @@ function save_policy(policy,path = nothing)
 
         if typeof(policy) <: CategoricalPolicy
             π = policy.π
-            @save string(path,"/policy_cat.bson") π
+            @save string(path,"policy_cat.bson") π
         elseif typeof(policy) <: DiagonalGaussianPolicy
             μ = policy.μ
             logΣ = policy.logΣ
-            @save string(path,"/policy_mu.bson") μ
-            @save string(path,"/policy_sigma.bson") logΣ
+            @save string(path,"policy_mu.bson") μ
+            @save string(path,"policy_sigma.bson") logΣ
         end
 
         value_net = policy.value_net
-        @save string(path,"/value.bson") value_net
+        @save string(path,"value.bson") value_net
     end
 
     println("Saved...")
@@ -299,7 +299,7 @@ function load_policy(env_wrap::EnvWrap,path = nothing)
         if path == nothing
             @load "../weights/policy_cat.bson" π
         else
-            @load string("policy_cat.bson") π
+            @load string(path,"policy_cat.bson") π
         end
 
         policy.π = π
