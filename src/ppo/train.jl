@@ -127,8 +127,8 @@ end
 
 function train_step()    
     clear(episode_buffer)
-    states,actions,rewards,advantages,returns,log_probs = collect_and_process_rollouts(policy,episode_buffer,EPISODE_LENGTH,stats_buffer)
-
+    collect_and_process_rollouts(policy,episode_buffer,EPISODE_LENGTH,stats_buffer)
+    
     idxs = partition(shuffle(1:size(episode_buffer.exp_dict["states"])[end]),BATCH_SIZE)
 
     for epoch in 1:PPO_EPOCHS
