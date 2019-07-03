@@ -110,5 +110,4 @@ function collect_and_process_rollouts(policy,episode_buffer::Buffer,num_steps::I
     # Log the statistics
     add(stats_buffer,"rollout_returns",mean(hcat(rollout_returns...)))
     
-    return states,actions,rewards,advantages,returns,log_probs
 end
