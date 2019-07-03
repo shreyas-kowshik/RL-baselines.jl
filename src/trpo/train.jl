@@ -18,7 +18,7 @@ using BSON
 using BSON:@save,@load
 using JLD
 
-num_processes = 1
+num_processes = 8
 include("../common/policies.jl")
 include("../common/utils.jl")
 include("../common/buffer.jl")
@@ -61,7 +61,8 @@ end
 # Environment Variables #
 # NOTE : TRPO will not work with Categorical Policies as nested AD is not currently defined for `softmax`
 ENV_NAME = "Pendulum-v0"
-EPISODE_LENGTH = 100
+EPISODE_LENGTH = 2000
+resume = false
 # Policy parameters #
 η = 3e-4 # Learning rate
 STD = 0.0 # Standard deviation
@@ -69,7 +70,7 @@ STD = 0.0 # Standard deviation
 γ = 0.99
 λ = 0.95
 # Optimization parameters
-δ = 0.01 # KL-Divergence constraint
+δ = 0.003 # KL-Divergence constraint
 NUM_EPISODES = 100000
 BATCH_SIZE = 256
 # FREQUENCIES
@@ -79,7 +80,12 @@ global_step = 0
 
 # Define policy
 env_wrap = EnvWrap(ENV_NAME)
-policy = get_policy(env_wrap)
+
+if resume == true
+    policy = load_policy(env_wrap,"../../weights/")
+else
+    policy = get_policy(env_wrap)
+end
 
 # Define buffers
 episode_buffer = initialize_episode_buffer()
@@ -122,8 +128,14 @@ function linesearch(policy,step_dir,states,actions,advantages,old_log_probs,kl_v
         # Compute kl divergence
         kl_div = kl_loss(policy,states,kl_vars).data
         
-        if new_loss > old_loss && (kl_div <= δ)
-            println("Success")
+        # Output Statistics #
+        # println("Old Loss : $old_loss")
+        # println("New Loss : $new_loss")
+        # println("KL Div : $kl_div")
+        #####################
+
+        if new_loss >= old_loss && (kl_div <= δ)
+            println("\n\n\n---Success---\n\n\n")
             set_flat_params(new_params,get_policy_net(policy))
         end
     end
@@ -155,6 +167,7 @@ function train_step()
     idxs = partition(shuffle(1:size(episode_buffer.exp_dict["states"])[end]),BATCH_SIZE)
     
     for i in idxs
+        # println("A")
         mb_states = episode_buffer.exp_dict["states"][:,i] 
         mb_actions = episode_buffer.exp_dict["actions"][:,i] 
         mb_advantages = episode_buffer.exp_dict["advantages"][:,i] 
@@ -171,7 +184,10 @@ function train()
         println(i)
         train_step()
         println(mean(stats_buffer.exp_dict["rollout_returns"]))
-        save_policy(policy)
+
+        if i % SAVE_FREQUENCY == 0
+            save_policy(policy)
+        end
     end
 end
 
