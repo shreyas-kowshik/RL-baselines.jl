@@ -111,9 +111,8 @@ function value_loss(policy,states::Array,returns::Array)
     return mean((policy.value_net(states) .- returns).^2)
 end
 
-function linesearch(policy,step_dir,states,actions,advantages,old_log_probs,kl_vars,num_steps=10;α=0.5)
+function linesearch(policy,step_dir,states,actions,advantages,old_log_probs,kl_vars,old_params,num_steps=10;α=0.5)
     old_loss = policy_loss(policy,states,actions,advantages,old_log_probs).data
-    old_params = get_flat_params(get_policy_net(policy))
 
     for i in 1:num_steps
         # Obtain new parameters
@@ -148,7 +147,7 @@ function linesearch(policy,step_dir,states,actions,advantages,old_log_probs,kl_v
     set_flat_params(old_params,get_policy_net(policy))
 end
 
-function trpo_update(policy,states,actions,advantages,returns,log_probs,kl_vars)
+function trpo_update(policy,states,actions,advantages,returns,log_probs,kl_vars,old_params)
     model_params = get_policy_params(policy)
     policy_grads = Tracker.gradient(() -> policy_loss(policy,states,actions,advantages,log_probs),model_params)
     flat_policy_grads = get_flat_grads(policy_grads,get_policy_net(policy)).data
@@ -157,7 +156,7 @@ function trpo_update(policy,states,actions,advantages,returns,log_probs,kl_vars)
     step_dir = sqrt.((2 * δ) ./ (x' * Hvp(policy,states,kl_vars,x))) .* x
     
     # Do a line search and update the parameters
-    linesearch(policy,step_dir,states,actions,advantages,log_probs,kl_vars)
+    linesearch(policy,step_dir,states,actions,advantages,log_probs,kl_vars,old_params)
     
     # Update value function
     value_params = get_value_params(policy)
@@ -165,12 +164,14 @@ function trpo_update(policy,states,actions,advantages,returns,log_probs,kl_vars)
     update!(opt_value,value_params,gs)
 end
 
-function train_step()    
+function train_step() 
     clear(episode_buffer)
     collect_and_process_rollouts(policy,episode_buffer,EPISODE_LENGTH,stats_buffer)
     
     idxs = partition(shuffle(1:size(episode_buffer.exp_dict["states"])[end]),BATCH_SIZE)
     
+    old_params = copy(get_flat_params(get_policy_net(policy)))
+
     for i in idxs
          println("A")
         mb_states = episode_buffer.exp_dict["states"][:,i] 
@@ -180,7 +181,7 @@ function train_step()
         mb_log_probs = episode_buffer.exp_dict["log_probs"][:,i]
         mb_kl_vars = episode_buffer.exp_dict["kl_params"][i]
         
-        trpo_update(policy,mb_states,mb_actions,mb_advantages,mb_returns,mb_log_probs,mb_kl_vars)
+        trpo_update(policy,mb_states,mb_actions,mb_advantages,mb_returns,mb_log_probs,mb_kl_vars,old_params)
     end
 end
 
