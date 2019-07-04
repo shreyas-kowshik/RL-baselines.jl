@@ -18,7 +18,7 @@ using BSON
 using BSON:@save,@load
 using JLD
 
-num_processes = 8
+num_processes = 16
 include("../common/policies.jl")
 include("../common/utils.jl")
 include("../common/buffer.jl")
@@ -72,7 +72,7 @@ STD = 0.0 # Standard deviation
 # Optimization parameters
 δ = 0.003 # KL-Divergence constraint
 NUM_EPISODES = 100000
-BATCH_SIZE = 256
+BATCH_SIZE = 1024
 # FREQUENCIES
 SAVE_FREQUENCY = 50
 VERBOSE_FREQUENCY = 5
@@ -118,10 +118,14 @@ function linesearch(policy,step_dir,states,actions,advantages,old_log_probs,kl_v
     for i in 1:num_steps
         # Obtain new parameters
         new_params = old_params .+ ((α^i) .* step_dir)
+	println("-- Old Params --- : ")
+	println(old_params[1])
 
         # Set the new parameters to the policy
         set_flat_params(new_params,get_policy_net(policy))
-
+	println(new_params[end])
+	println(policy.logΣ)
+	
         # Compute surrogate loss
         new_loss = policy_loss(policy,states,actions,advantages,old_log_probs).data
         
@@ -129,14 +133,15 @@ function linesearch(policy,step_dir,states,actions,advantages,old_log_probs,kl_v
         kl_div = kl_loss(policy,states,kl_vars).data
         
         # Output Statistics #
-        # println("Old Loss : $old_loss")
-        # println("New Loss : $new_loss")
-        # println("KL Div : $kl_div")
+        println("Old Loss : $old_loss")
+        println("New Loss : $new_loss")
+        println("KL Div : $kl_div")
         #####################
 
         if new_loss >= old_loss && (kl_div <= δ)
             println("\n\n\n---Success---\n\n\n")
             set_flat_params(new_params,get_policy_net(policy))
+	    return nothing
         end
     end
     
@@ -148,7 +153,7 @@ function trpo_update(policy,states,actions,advantages,returns,log_probs,kl_vars)
     policy_grads = Tracker.gradient(() -> policy_loss(policy,states,actions,advantages,log_probs),model_params)
     flat_policy_grads = get_flat_grads(policy_grads,get_policy_net(policy)).data
 
-    x = conjugate_gradients(policy,states,kl_vars,Hvp,-1.0 .* flat_policy_grads,10)
+    x = conjugate_gradients(policy,states,kl_vars,Hvp,flat_policy_grads,10)
     step_dir = sqrt.((2 * δ) ./ (x' * Hvp(policy,states,kl_vars,x))) .* x
     
     # Do a line search and update the parameters
@@ -167,7 +172,7 @@ function train_step()
     idxs = partition(shuffle(1:size(episode_buffer.exp_dict["states"])[end]),BATCH_SIZE)
     
     for i in idxs
-        # println("A")
+         println("A")
         mb_states = episode_buffer.exp_dict["states"][:,i] 
         mb_actions = episode_buffer.exp_dict["actions"][:,i] 
         mb_advantages = episode_buffer.exp_dict["advantages"][:,i] 
