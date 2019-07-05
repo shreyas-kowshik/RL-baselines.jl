@@ -298,11 +298,14 @@ function load_policy(env_wrap::EnvWrap,path = nothing)
 
         if path == nothing
             @load "../weights/policy_cat.bson" π
+	    @load "../weights/value_net.bson" value_net
         else
             @load string(path,"policy_cat.bson") π
+	    @load string(path,"value_net.bson") value_net
         end
-
+	
         policy.π = π
+	policy.value_net = value_net
 
         println("Loaded")
         return policy
@@ -313,13 +316,16 @@ function load_policy(env_wrap::EnvWrap,path = nothing)
         if path == nothing
             @load "../weights/policy_mu.bson" μ
             @load "../weights/policy_sigma.bson" logΣ
+	    @load "../weights/value_net.bson" value_net
         else
             @load string(path,"policy_mu.bson") μ
             @load string(path,"policy_sigma.bson") logΣ
+	    @load string(path,"value_net.bson") value_net
         end
 
         policy.μ = μ
         policy.logΣ = logΣ
+	policy.value_net = value_net
 
         println("Loaded")
         return policy
@@ -328,3 +334,4 @@ function load_policy(env_wrap::EnvWrap,path = nothing)
         error("Environment type not supported")
     end
 end
+
