@@ -62,7 +62,7 @@ end
 # NOTE : TRPO will not work with Categorical Policies as nested AD is not currently defined for `softmax`
 ENV_NAME = "Pendulum-v0"
 EPISODE_LENGTH = 2000
-resume = false
+resume = true
 # Policy parameters #
 η = 3e-4 # Learning rate
 STD = 0.0 # Standard deviation
@@ -117,13 +117,9 @@ function linesearch(policy,step_dir,states,actions,advantages,old_log_probs,kl_v
     for i in 1:num_steps
         # Obtain new parameters
         new_params = old_params .+ ((α^i) .* step_dir)
-	println("-- Old Params --- : ")
-	println(old_params[1])
 
         # Set the new parameters to the policy
         set_flat_params(new_params,get_policy_net(policy))
-	println(new_params[end])
-	println(policy.logΣ)
 	
         # Compute surrogate loss
         new_loss = policy_loss(policy,states,actions,advantages,old_log_probs).data
@@ -132,13 +128,13 @@ function linesearch(policy,step_dir,states,actions,advantages,old_log_probs,kl_v
         kl_div = kl_loss(policy,states,kl_vars).data
         
         # Output Statistics #
-        println("Old Loss : $old_loss")
-        println("New Loss : $new_loss")
-        println("KL Div : $kl_div")
+        # println("Old Loss : $old_loss")
+        # println("New Loss : $new_loss")
+        # println("KL Div : $kl_div")
         #####################
-
+	
         if new_loss >= old_loss && (kl_div <= δ)
-            println("\n\n\n---Success---\n\n\n")
+            println("---Success---")
             set_flat_params(new_params,get_policy_net(policy))
 	    return nothing
         end
@@ -153,8 +149,15 @@ function trpo_update(policy,states,actions,advantages,returns,log_probs,kl_vars,
     flat_policy_grads = get_flat_grads(policy_grads,get_policy_net(policy)).data
 
     x = conjugate_gradients(policy,states,kl_vars,Hvp,flat_policy_grads,10)
-    step_dir = sqrt.((2 * δ) ./ (x' * Hvp(policy,states,kl_vars,x))) .* x
-    
+
+    step_dir = nothing
+    try
+    	step_dir = sqrt.((2 * δ) ./ (x' * Hvp(policy,states,kl_vars,x))) .* x
+    catch
+        println("Square root of a negative number received...Skipping update")
+	return
+    end
+     
     # Do a line search and update the parameters
     linesearch(policy,step_dir,states,actions,advantages,log_probs,kl_vars,old_params)
     
@@ -173,7 +176,7 @@ function train_step()
     old_params = copy(get_flat_params(get_policy_net(policy)))
 
     for i in idxs
-         println("A")
+        # println("A")
         mb_states = episode_buffer.exp_dict["states"][:,i] 
         mb_actions = episode_buffer.exp_dict["actions"][:,i] 
         mb_advantages = episode_buffer.exp_dict["advantages"][:,i] 
