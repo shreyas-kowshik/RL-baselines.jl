@@ -42,7 +42,7 @@ end
 
 function initialize_stats_buffer()
     sb = Buffer()
-    register(sb,"rollout_returns")
+    register(sb,"rollout_rewards")
     
     return sb
 end
@@ -60,8 +60,8 @@ end
 #----------------Hyperparameters----------------#
 # Environment Variables #
 ENV_NAME = "Pendulum-v0"
-EPISODE_LENGTH = 2000
-resume = true
+EPISODE_LENGTH = 1000
+resume = false
 # Policy parameters #
 η = 3e-4 # Learning rate
 STD = 0.0 # Standard deviation
@@ -78,7 +78,7 @@ c₂ = 0.001
 # PPO parameters
 ϵ = 0.2
 # FREQUENCIES
-SAVE_FREQUENCY = 50
+SAVE_FREQUENCY = 10 
 VERBOSE_FREQUENCY = 5
 global_step = 0
 
@@ -90,6 +90,8 @@ if resume == true
 else
     policy = get_policy(env_wrap)
 end
+
+println(policy)
 
 # Define buffers
 episode_buffer = initialize_episode_buffer()
@@ -148,10 +150,10 @@ function train()
     for i in 1:NUM_EPISODES
         println(i)
         train_step()
-        println(mean(stats_buffer.exp_dict["rollout_returns"]))
+        println(mean(stats_buffer.exp_dict["rollout_rewards"]))
 
         if i % SAVE_FREQUENCY == 0
-            save_policy(policy)
+            save_policy(policy,"../../weights/")
         end
     end
 end

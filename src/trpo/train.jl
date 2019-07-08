@@ -61,7 +61,7 @@ end
 # Environment Variables #
 # NOTE : TRPO will not work with Categorical Policies as nested AD is not currently defined for `softmax`
 ENV_NAME = "Pendulum-v0"
-EPISODE_LENGTH = 2000
+EPISODE_LENGTH = 1000
 resume = true
 # Policy parameters #
 η = 3e-4 # Learning rate
@@ -70,11 +70,12 @@ STD = 0.0 # Standard deviation
 γ = 0.99
 λ = 0.95
 # Optimization parameters
-δ = 0.003 # KL-Divergence constraint
+δ = 0.01 # KL-Divergence constraint
+V_ITERS = 5 # Number of iterations to train the value function network
 NUM_EPISODES = 100000
-BATCH_SIZE = 1024
+BATCH_SIZE = 256
 # FREQUENCIES
-SAVE_FREQUENCY = 50
+SAVE_FREQUENCY = 25
 VERBOSE_FREQUENCY = 5
 global_step = 0
 
@@ -149,7 +150,8 @@ function trpo_update(policy,states,actions,advantages,returns,log_probs,kl_vars,
     flat_policy_grads = get_flat_grads(policy_grads,get_policy_net(policy)).data
 
     x = conjugate_gradients(policy,states,kl_vars,Hvp,flat_policy_grads,10)
-
+    println(minimum(x' * Hvp(policy,states,kl_vars,x)))
+    
     step_dir = nothing
     try
     	step_dir = sqrt.((2 * δ) ./ (x' * Hvp(policy,states,kl_vars,x))) .* x
@@ -162,9 +164,11 @@ function trpo_update(policy,states,actions,advantages,returns,log_probs,kl_vars,
     linesearch(policy,step_dir,states,actions,advantages,log_probs,kl_vars,old_params)
     
     # Update value function
-    value_params = get_value_params(policy)
-    gs = Tracker.gradient(() -> value_loss(policy,states,returns),value_params)
-    update!(opt_value,value_params,gs)
+    for _ in 1:V_ITERS
+    	value_params = get_value_params(policy)
+    	gs = Tracker.gradient(() -> value_loss(policy,states,returns),value_params)
+    	update!(opt_value,value_params,gs)
+    end
 end
 
 function train_step() 
