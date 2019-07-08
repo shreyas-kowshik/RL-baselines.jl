@@ -28,7 +28,7 @@ function Hvp(policy,states,kl_vars,x;damping_coeff=0.1)
     """
     model_params = get_policy_params(policy)
     hessian = Tracker.gradient(() -> gvp(policy,states,kl_vars,x),model_params)
-    return get_flat_grads(hessian,get_policy_net(policy)) .+ (damping_coeff .* x)
+    return get_flat_grads(hessian,get_policy_net(policy)) # .+ (damping_coeff .* x)
 end
 
 function conjugate_gradients(policy,states,kl_vars,Hvp,b,nsteps=10,err=1e-10)

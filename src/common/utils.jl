@@ -37,14 +37,23 @@ end
 Returns the cumulative discounted returns for each timestep
 """
 
-function disconunted_returns(rewards::Array;γ=0.99)
+function disconunted_returns(policy,rewards::Array,states::Array,terminate_horizon=false;γ=0.99)
     r = 0.0
     returns = []
+
+    V_T = policy.value_net(states[end]).data
+
     for i in reverse(1:length(rewards))
         r = rewards[i] + γ*r
         push!(returns,r)
     end
     returns = reverse(returns)
+
+    if terminate_horizon == false	
+    	println(V_T)
+    	returns = returns .+ V_T
+    end
+
     returns
 end
 

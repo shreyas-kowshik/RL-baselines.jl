@@ -32,6 +32,7 @@ end
 function scale_rewards(env_wrap::EnvWrap,rewards)
     if env_wrap.ENV_NAME == "Pendulum-v0"
          rewards = rewards ./ 16.2736044 .+ 2.0f0
+	 # rewards = rewards ./ 16.2736044
     end
     
     rewards
@@ -279,6 +280,8 @@ function save_policy(policy,path = nothing)
             π = policy.π
             @save string(path,"policy_cat.bson") π
         elseif typeof(policy) <: DiagonalGaussianPolicy
+	    println("IN")
+	    println(path)
             μ = policy.μ
             logΣ = policy.logΣ
             @save string(path,"policy_mu.bson") μ
@@ -298,10 +301,10 @@ function load_policy(env_wrap::EnvWrap,path = nothing)
 
         if path == nothing
             @load "../weights/policy_cat.bson" π
-	    @load "../weights/value_net.bson" value_net
+	    @load "../weights/value.bson" value_net
         else
             @load string(path,"policy_cat.bson") π
-	    @load string(path,"value_net.bson") value_net
+	    @load string(path,"value.bson") value_net
         end
 	
         policy.π = π
@@ -316,11 +319,11 @@ function load_policy(env_wrap::EnvWrap,path = nothing)
         if path == nothing
             @load "../weights/policy_mu.bson" μ
             @load "../weights/policy_sigma.bson" logΣ
-	    @load "../weights/value_net.bson" value_net
+	    @load "../weights/value.bson" value_net
         else
             @load string(path,"policy_mu.bson") μ
             @load string(path,"policy_sigma.bson") logΣ
-	    @load string(path,"value_net.bson") value_net
+	    @load string(path,"value.bson") value_net
         end
 
         policy.μ = μ

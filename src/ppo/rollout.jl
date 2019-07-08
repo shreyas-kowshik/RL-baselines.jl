@@ -85,8 +85,12 @@ function collect_and_process_rollouts(policy,episode_buffer::Buffer,num_steps::I
         episode_rewards = scale_rewards(policy.env_wrap,episode_rewards)
         episode_advantages = gae(policy,episode_states,episode_actions,episode_rewards,episode_next_states,num_steps)
         episode_advantages = normalise(episode_advantages)
-       	
-        episode_returns = disconunted_returns(episode_rewards)
+        
+	if typeof(policy) <:DiagonalGaussianPolicy
+        	episode_returns = disconunted_returns(policy,episode_rewards,episode_next_states,false)
+	else
+        	episode_returns = disconunted_returns(policy,episode_rewards,episode_states,true)
+	end
         
         push!(states,hcat(episode_states...))
         push!(actions,hcat(episode_actions...))
@@ -98,8 +102,9 @@ function collect_and_process_rollouts(policy,episode_buffer::Buffer,num_steps::I
         push!(rollout_returns,episode_returns)
 
     end
-   	
-    # println(size(states[1]))
+    
+    returns ./ (num_processes * EPISODE_LENGTH)
+
     episode_buffer.exp_dict["states"] = hcat(states...)
     episode_buffer.exp_dict["actions"] = hcat(actions...)
     episode_buffer.exp_dict["rewards"] = hcat(rewards...)
@@ -108,6 +113,8 @@ function collect_and_process_rollouts(policy,episode_buffer::Buffer,num_steps::I
     episode_buffer.exp_dict["log_probs"] = hcat(log_probs...)
 
     # Log the statistics
-    add(stats_buffer,"rollout_returns",mean(hcat(rollout_returns...)))
-    
+    add(stats_buffer,"rollout_rewards",sum(hcat(rewards...)))
+
+    println("Rollout rewards : $(sum(hcat(rewards...)))")
+
 end
