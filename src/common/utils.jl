@@ -11,6 +11,11 @@ function normalise(arr)
     (arr .- mean(arr))./(sqrt(var(arr) + 1e-10))
 end
 
+function normalise_across_procs(arr)
+    arr = reshape(arr,EPISODE_LENGTH,num_processes)
+    reshape((arr .- mean(arr,dims=2))./(sqrt.(var(arr,dims=2) .+ 1e-10)),1,EPISODE_LENGTH*num_processes)
+end
+
 """
 Returns a Generalized Advantage Estimate for an episode
 """
@@ -37,22 +42,19 @@ end
 Returns the cumulative discounted returns for each timestep
 """
 
-function disconunted_returns(policy,rewards::Array,states::Array,terminate_horizon=false;γ=0.99)
+function disconunted_returns(rewards::Array,last_val=0;γ=0.99)
     r = 0.0
     returns = []
 
-    V_T = policy.value_net(states[end]).data
-
     for i in reverse(1:length(rewards))
         r = rewards[i] + γ*r
+	if i == length(rewards)
+		println(last_val)
+		r = r + last_val
+	end
         push!(returns,r)
     end
     returns = reverse(returns)
-
-    if terminate_horizon == false	
-    	println(V_T)
-    	returns = returns .+ V_T
-    end
 
     returns
 end
