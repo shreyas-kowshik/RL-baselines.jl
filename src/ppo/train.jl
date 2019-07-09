@@ -20,7 +20,7 @@ using JLD
 
 println("imported")
 
-num_processes = 8
+num_processes = 16
 include("../common/policies.jl")
 include("../common/utils.jl")
 include("../common/buffer.jl")
@@ -60,10 +60,11 @@ end
 #----------------Hyperparameters----------------#
 # Environment Variables #
 ENV_NAME = "Pendulum-v0"
-EPISODE_LENGTH = 1000
+EPISODE_LENGTH = 800
+terminate_horizon = false
 resume = false
 # Policy parameters #
-η = 3e-4 # Learning rate
+η = 4e-4 # Learning rate
 STD = 0.0 # Standard deviation
 # GAE parameters
 γ = 0.99
@@ -71,7 +72,7 @@ STD = 0.0 # Standard deviation
 # Optimization parameters
 PPO_EPOCHS = 10
 NUM_EPISODES = 100000
-BATCH_SIZE = 256
+BATCH_SIZE = 200
 c₀ = 1.0
 c₁ = 1.0
 c₂ = 0.001
@@ -131,7 +132,7 @@ function train_step()
     clear(episode_buffer)
     collect_and_process_rollouts(policy,episode_buffer,EPISODE_LENGTH,stats_buffer)
     
-    idxs = partition(shuffle(1:size(episode_buffer.exp_dict["states"])[end]),BATCH_SIZE)
+    idxs = partition(1:size(episode_buffer.exp_dict["states"])[end],BATCH_SIZE)
 
     for epoch in 1:PPO_EPOCHS
         for i in idxs

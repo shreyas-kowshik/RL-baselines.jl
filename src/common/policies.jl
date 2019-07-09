@@ -91,8 +91,8 @@ function DiagonalGaussianPolicy(env_wrap::EnvWrap, μ = nothing, value_net = not
     end
     
     if value_net == nothing
-        value_net = Chain(Dense(env_wrap.STATE_SIZE,30,relu;initW=_random_normal),
-                  Dense(30,30,relu;initW=_random_normal),
+        value_net = Chain(Dense(env_wrap.STATE_SIZE,30,tanh;initW=_random_normal),
+                  Dense(30,30,tanh;initW=_random_normal),
                   Dense(30,1;initW=_random_normal))
     end
     

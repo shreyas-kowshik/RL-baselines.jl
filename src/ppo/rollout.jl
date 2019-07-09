@@ -83,15 +83,15 @@ function collect_and_process_rollouts(policy,episode_buffer::Buffer,num_steps::I
         end
         
         episode_rewards = scale_rewards(policy.env_wrap,episode_rewards)
-        episode_advantages = gae(policy,episode_states,episode_actions,episode_rewards,episode_next_states,num_steps)
-        episode_advantages = normalise(episode_advantages)
-        
-	if typeof(policy) <:DiagonalGaussianPolicy
-        	episode_returns = disconunted_returns(policy,episode_rewards,episode_next_states,false)
+
+        episode_advantages = gae(policy,episode_states,episode_actions,episode_rewards,episode_states,num_steps)
+	
+	if terminate_horizon == false
+	        episode_returns = disconunted_returns(episode_rewards,policy.value_net(episode_states[end]).data[1])
 	else
-        	episode_returns = disconunted_returns(policy,episode_rewards,episode_states,true)
+		episode_returns = disconunted_returns(episode_rewards)
 	end
-        
+	
         push!(states,hcat(episode_states...))
         push!(actions,hcat(episode_actions...))
         push!(rewards,hcat(episode_rewards...))
@@ -103,12 +103,13 @@ function collect_and_process_rollouts(policy,episode_buffer::Buffer,num_steps::I
 
     end
     
-    returns ./ (num_processes * EPISODE_LENGTH)
+    # Normalize advantage across all processes
+    advantages = normalise_across_procs(hcat(advantages...))
 
     episode_buffer.exp_dict["states"] = hcat(states...)
     episode_buffer.exp_dict["actions"] = hcat(actions...)
     episode_buffer.exp_dict["rewards"] = hcat(rewards...)
-    episode_buffer.exp_dict["advantages"] = hcat(advantages...)
+    episode_buffer.exp_dict["advantages"] = advantages # hcat(advantages...)
     episode_buffer.exp_dict["returns"] = hcat(returns...)
     episode_buffer.exp_dict["log_probs"] = hcat(log_probs...)
 
