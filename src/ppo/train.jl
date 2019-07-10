@@ -149,14 +149,6 @@ function train_step()
     	    kl_div = mean(kl_divergence(policy,mb_kl_vars,mb_states))
     	    println("KL Sample : $(kl_div)")
 
-	    """
-	    if kl_div > 1.5 * 0.05
-		# println("Early Stopping")
-		early_stop = true
-		break
-	    end
-    	    """
-
             ppo_update(policy,mb_states,mb_actions,mb_advantages,mb_returns,mb_log_probs,mb_kl_vars)
         end
 	
@@ -168,15 +160,6 @@ end
 
 function train()
     for i in 1:NUM_EPISODES
-	"""
-	if i % 25 == 0
-		ϵ = ϵ * 0.8
-		if ϵ < 0.01
-			ϵ = 0.01
-		end
-	end
-	"""
-	
         println(i)
         train_step()
         println(mean(stats_buffer.exp_dict["rollout_rewards"]))
