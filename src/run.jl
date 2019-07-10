@@ -21,8 +21,8 @@ using JLD
 include("common/policies.jl")
 include("common/utils.jl")
 
-ENV_NAME = "CartPole-v0"
-TEST_STEPS = 2000
+ENV_NAME = "Pendulum-v0"
+TEST_STEPS = 50000
 global steps_run = 0
 
 LOAD_PATH = "../weights/"
@@ -37,17 +37,26 @@ policy = load_policy(env_wrap,LOAD_PATH)
 # Test Run Function
 function test_run(env)
 	global steps_run
- 	testmode!(env)
+ 	# testmode!(env)
     ep_r = 0.0
     
     s = reset!(env)
+    println(s)
     for i in 1:TEST_STEPS
-    	println(i)
+	if i % 10000 == 0
+		println("---Resetting---")
+		s = reset!(env)
+		println(s)
+		println(ep_r)
+		ep_r = 0.0
+	end
+
         # render!(env)
-	# a = policy.μ(s)
-	a = action(policy,s)
+	a = policy.μ(s)
+	# a = action(policy,s)
         s_,r,_ = step!(env,a)
-	
+	println(r)
+
         ep_r += r
         
 		steps_run += 1

@@ -59,7 +59,8 @@ function collect_and_process_rollouts(policy,episode_buffer::Buffer,num_steps::I
     advantages = []
     returns = []
     log_probs = []
-    
+    kl_params = []   
+
     # Logging statistics
     rollout_returns = []
     
@@ -79,6 +80,15 @@ function collect_and_process_rollouts(policy,episode_buffer::Buffer,num_steps::I
                 push!(log_probs,log_prob(policy,reshape(ro[i][1],length(ro[i][1]),1),[ro[i][2]]).data)
              elseif typeof(ro[i][2]) <: Array
                 push!(log_probs,log_prob(policy,reshape(ro[i][1],length(ro[i][1]),1),reshape(ro[i][2],length(ro[i][2]),1)).data)
+             end
+
+	     # Kl divergence variables
+             if typeof(policy) <: CategoricalPolicy
+                push!(kl_params,log_probs[end])
+             elseif typeof(policy) <: DiagonalGaussianPolicy
+                μ = policy.μ(reshape(ro[i][1],length(ro[i][1]),1)).data
+                logΣ = policy.logΣ.data
+                push!(kl_params,[μ,logΣ])
              end
         end
         
@@ -114,6 +124,7 @@ function collect_and_process_rollouts(policy,episode_buffer::Buffer,num_steps::I
     episode_buffer.exp_dict["advantages"] = hcat(advantages...) # hcat(advantages...)
     episode_buffer.exp_dict["returns"] = hcat(returns...)
     episode_buffer.exp_dict["log_probs"] = hcat(log_probs...)
+    episode_buffer.exp_dict["kl_params"] = copy(kl_params)
 
     # Log the statistics
     add(stats_buffer,"rollout_rewards",sum(hcat(rewards...)))

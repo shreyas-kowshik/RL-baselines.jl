@@ -194,8 +194,8 @@ function kl_divergence(policy,kl_params,states::Array)
 
         log_ratio = log_probs .- old_log_probs
         kl_div = (exp.(old_log_probs)) .* log_ratio
-        
-        return sum(kl_div,dims=1)
+         
+        return -1.0f0 .* sum(kl_div,dims=1)
     
     elseif typeof(policy) <: DiagonalGaussianPolicy
         μ0 = policy.μ(states)

@@ -20,7 +20,7 @@ using JLD
 
 println("imported")
 
-num_processes = 16
+num_processes = 1
 include("../common/policies.jl")
 include("../common/utils.jl")
 include("../common/buffer.jl")
@@ -36,6 +36,7 @@ function initialize_episode_buffer()
     register(eb,"returns")
     register(eb,"advantages")
     register(eb,"log_probs")
+    register(eb,"kl_params")
     
     return eb
 end
@@ -59,12 +60,12 @@ end
 
 #----------------Hyperparameters----------------#
 # Environment Variables #
-ENV_NAME = "CartPole-v0"
-EPISODE_LENGTH = 80000
-terminate_horizon = true
+ENV_NAME = "Pendulum-v0"
+EPISODE_LENGTH = 2000
+terminate_horizon = false
 resume = false
 # Policy parameters #
-η = 3e-4 # Learning rate
+η = 1e-3 # Learning rate
 STD = 0.0 # Standard deviation
 # GAE parameters
 γ = 0.99
@@ -72,12 +73,12 @@ STD = 0.0 # Standard deviation
 # Optimization parameters
 PPO_EPOCHS = 10
 NUM_EPISODES = 100000
-BATCH_SIZE = 200
+BATCH_SIZE = EPISODE_LENGTH
 c₀ = 1.0
 c₁ = 1.0
-c₂ = 0.001
+c₂ = 0.01
 # PPO parameters
-ϵ = 0.2
+ϵ = 0.1
 # FREQUENCIES
 SAVE_FREQUENCY = 10 
 VERBOSE_FREQUENCY = 5
@@ -118,7 +119,7 @@ function loss(policy,states::Array,actions::Array,advantages::Array,returns::Arr
     -c₀*policy_loss + c₁*value_loss - c₂*entropy_loss
 end
 
-function ppo_update(policy,states::Array,actions::Array,advantages::Array,returns::Array,old_log_probs::Array)
+function ppo_update(policy,states::Array,actions::Array,advantages::Array,returns::Array,old_log_probs::Array,kl_vars)
     model_params = params(get_policy_params(policy)...,get_value_params(policy)...)
     
     # Calculate gradients
@@ -132,8 +133,9 @@ function train_step()
     clear(episode_buffer)
     collect_and_process_rollouts(policy,episode_buffer,EPISODE_LENGTH,stats_buffer)
     
-    idxs = partition(shuffle(1:size(episode_buffer.exp_dict["states"])[end]),BATCH_SIZE)
+    idxs = partition(1:size(episode_buffer.exp_dict["states"])[end],BATCH_SIZE)
     
+    early_stop = false
     for epoch in 1:PPO_EPOCHS
         for i in idxs
             mb_states = episode_buffer.exp_dict["states"][:,i] 
@@ -141,14 +143,40 @@ function train_step()
             mb_advantages = episode_buffer.exp_dict["advantages"][:,i] 
             mb_returns = episode_buffer.exp_dict["returns"][:,i] 
             mb_log_probs = episode_buffer.exp_dict["log_probs"][:,i]
+	    mb_kl_vars = episode_buffer.exp_dict["kl_params"][i]
+	
+	    
+    	    kl_div = mean(kl_divergence(policy,mb_kl_vars,mb_states))
+    	    println("KL Sample : $(kl_div)")
 
-            ppo_update(policy,mb_states,mb_actions,mb_advantages,mb_returns,mb_log_probs)
+	    """
+	    if kl_div > 1.5 * 0.05
+		# println("Early Stopping")
+		early_stop = true
+		break
+	    end
+    	    """
+
+            ppo_update(policy,mb_states,mb_actions,mb_advantages,mb_returns,mb_log_probs,mb_kl_vars)
         end
+	
+	if early_stop == true
+		break
+	end
     end
 end
 
 function train()
     for i in 1:NUM_EPISODES
+	"""
+	if i % 25 == 0
+		ϵ = ϵ * 0.8
+		if ϵ < 0.01
+			ϵ = 0.01
+		end
+	end
+	"""
+	
         println(i)
         train_step()
         println(mean(stats_buffer.exp_dict["rollout_rewards"]))
