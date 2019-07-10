@@ -85,8 +85,10 @@ function collect_and_process_rollouts(policy,episode_buffer::Buffer,num_steps::I
         episode_rewards = scale_rewards(policy.env_wrap,episode_rewards)
 
         episode_advantages = gae(policy,episode_states,episode_actions,episode_rewards,episode_states,num_steps)
-	
+	episode_advantages = normalise(episode_advantages)
+
 	if terminate_horizon == false
+		println("Appending value of last state to returns")
 	        episode_returns = disconunted_returns(episode_rewards,policy.value_net(episode_states[end]).data[1])
 	else
 		episode_returns = disconunted_returns(episode_rewards)
@@ -104,12 +106,12 @@ function collect_and_process_rollouts(policy,episode_buffer::Buffer,num_steps::I
     end
     
     # Normalize advantage across all processes
-    advantages = normalise_across_procs(hcat(advantages...))
+    # advantages = normalise_across_procs(hcat(advantages...))
 
     episode_buffer.exp_dict["states"] = hcat(states...)
     episode_buffer.exp_dict["actions"] = hcat(actions...)
     episode_buffer.exp_dict["rewards"] = hcat(rewards...)
-    episode_buffer.exp_dict["advantages"] = advantages # hcat(advantages...)
+    episode_buffer.exp_dict["advantages"] = hcat(advantages...) # hcat(advantages...)
     episode_buffer.exp_dict["returns"] = hcat(returns...)
     episode_buffer.exp_dict["log_probs"] = hcat(log_probs...)
 

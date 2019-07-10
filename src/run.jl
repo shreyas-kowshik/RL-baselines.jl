@@ -21,7 +21,7 @@ using JLD
 include("common/policies.jl")
 include("common/utils.jl")
 
-ENV_NAME = "Pendulum-v0"
+ENV_NAME = "CartPole-v0"
 TEST_STEPS = 2000
 global steps_run = 0
 
@@ -44,7 +44,8 @@ function test_run(env)
     for i in 1:TEST_STEPS
     	println(i)
         # render!(env)
-	a = policy.μ(s)
+	# a = policy.μ(s)
+	a = action(policy,s)
         s_,r,_ = step!(env,a)
 	
         ep_r += r

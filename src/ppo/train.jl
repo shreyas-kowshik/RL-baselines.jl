@@ -59,12 +59,12 @@ end
 
 #----------------Hyperparameters----------------#
 # Environment Variables #
-ENV_NAME = "Pendulum-v0"
-EPISODE_LENGTH = 800
-terminate_horizon = false
+ENV_NAME = "CartPole-v0"
+EPISODE_LENGTH = 80000
+terminate_horizon = true
 resume = false
 # Policy parameters #
-η = 4e-4 # Learning rate
+η = 3e-4 # Learning rate
 STD = 0.0 # Standard deviation
 # GAE parameters
 γ = 0.99
@@ -132,8 +132,8 @@ function train_step()
     clear(episode_buffer)
     collect_and_process_rollouts(policy,episode_buffer,EPISODE_LENGTH,stats_buffer)
     
-    idxs = partition(1:size(episode_buffer.exp_dict["states"])[end],BATCH_SIZE)
-
+    idxs = partition(shuffle(1:size(episode_buffer.exp_dict["states"])[end]),BATCH_SIZE)
+    
     for epoch in 1:PPO_EPOCHS
         for i in idxs
             mb_states = episode_buffer.exp_dict["states"][:,i] 
