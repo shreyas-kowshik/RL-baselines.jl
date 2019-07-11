@@ -18,7 +18,7 @@ using BSON
 using BSON:@save,@load
 using JLD
 
-num_processes = 16
+num_processes = 1
 include("../common/policies.jl")
 include("../common/utils.jl")
 include("../common/buffer.jl")
@@ -64,7 +64,7 @@ ENV_NAME = "Pendulum-v0"
 EPISODE_LENGTH = 1000
 resume = true
 # Policy parameters #
-η = 3e-4 # Learning rate
+η = 1e-3 # Learning rate
 STD = 0.0 # Standard deviation
 # GAE parameters
 γ = 0.99
