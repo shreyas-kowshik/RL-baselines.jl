@@ -23,7 +23,7 @@ include("common/policies.jl")
 include("common/utils.jl")
 
 ENV_NAME = "Pendulum-v0"
-TEST_STEPS = 3000
+TEST_STEPS = 10000
 global steps_run = 0
 
 LOAD_PATH = "../weights/ppo/Pendulum-v0/"

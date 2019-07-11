@@ -96,7 +96,12 @@ function collect_and_process_rollouts(policy,episode_buffer::Buffer,num_steps::I
         episode_advantages = gae(policy,episode_states,episode_actions,episode_rewards,episode_next_states,num_steps)
         episode_advantages = normalise(episode_advantages)
         
-        episode_returns = disconunted_returns(episode_rewards)
+        if terminate_horizon == false
+              println("Appending value of last state to returns")
+              episode_returns = disconunted_returns(episode_rewards,policy.value_net(episode_states[end]).data[1])
+        else
+          episode_returns = disconunted_returns(episode_rewards)
+        end
 
         push!(states,hcat(episode_states...))
         push!(actions,hcat(episode_actions...))
