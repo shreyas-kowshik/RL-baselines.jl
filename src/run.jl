@@ -3,6 +3,7 @@ Pkg.activate("../Project.toml")
 
 using Flux
 using Gym
+using OpenAIGym
 import Reinforce.action
 import Reinforce:run_episode
 import Flux.params
@@ -22,16 +23,18 @@ include("common/policies.jl")
 include("common/utils.jl")
 
 ENV_NAME = "Pendulum-v0"
-TEST_STEPS = 50000
+TEST_STEPS = 3000
 global steps_run = 0
 
-LOAD_PATH = "../weights/"
+LOAD_PATH = "../weights/ppo/Pendulum-v0/"
 
 # Define policy
 env_wrap = EnvWrap(ENV_NAME)
 
-env = make(ENV_NAME,:rgb)
-env.max_episode_steps = TEST_STEPS
+# env = make(ENV_NAME,:rgb)
+# env.max_episode_steps = TEST_STEPS
+env = GymEnv(ENV_NAME)
+env.pyenv._max_episode_steps = TEST_STEPS
 policy = load_policy(env_wrap,LOAD_PATH)
 
 # Test Run Function
@@ -40,22 +43,26 @@ function test_run(env)
  	# testmode!(env)
     ep_r = 0.0
     
-    s = reset!(env)
+    s = OpenAIGym.reset!(env)
     println(s)
     for i in 1:TEST_STEPS
-	if i % 10000 == 0
+	if i % 1000 == 0
 		println("---Resetting---")
-		s = reset!(env)
+		s = OpenAIGym.reset!(env)
 		println(s)
-		println(ep_r)
 		ep_r = 0.0
 	end
 
-        # render!(env)
-	a = policy.μ(s)
+        OpenAIGym.render(env)
+	a = policy.μ(s).data
+    a = convert.(Float64,a)
+    a = reshape(a,env_wrap.ACTION_SIZE)
+
 	# a = action(policy,s)
-        s_,r,_ = step!(env,a)
-	println(r)
+        # s_,r,_ = step!(env,a)
+        r,s_ = OpenAIGym.step!(env,a)
+	println(a)
+    sleep(0.01)
 
         ep_r += r
         
