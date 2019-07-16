@@ -54,7 +54,7 @@ function test_run(env)
 	end
 
         OpenAIGym.render(env)
-	a = policy.μ(s).data
+    a = test_action(policy,s).data
     a = convert.(Float64,a)
     a = reshape(a,env_wrap.ACTION_SIZE)
 

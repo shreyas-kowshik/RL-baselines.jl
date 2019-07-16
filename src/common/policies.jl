@@ -115,8 +115,6 @@ function action(policy,state)
     policy : A policy type defined in `policy.jl`
     state : output of reset!(env) or step!(env,action)
     """
-    
-    # state = reshape(Array(state),length(state),1)
     a = nothing
     
     if typeof(policy) <: CategoricalPolicy
@@ -135,6 +133,27 @@ function action(policy,state)
         dis = MvNormal(μ.data,Σ)
         
         a = rand(dis,policy.env_wrap.ACTION_SIZE)
+    else
+        error("Policy type not yet implemented")
+    end
+    
+    a
+end
+
+function test_action(policy,state)
+    """
+    policy : A policy type defined in `policy.jl`
+    state : output of reset!(env) or step!(env,action)
+    """
+    a = nothing
+    
+    if typeof(policy) <: CategoricalPolicy
+        action_probs = policy.π(state).data
+        action_probs = reshape(action_probs,policy.env_wrap.ACTION_SIZE)
+        a = Distributions.sample(1:policy.env_wrap.ACTION_SIZE,Distributions.Weights(action_probs))
+    elseif typeof(policy) <: DiagonalGaussianPolicy
+        # Use only the mean for prediction
+        a = policy.μ(state)
     else
         error("Policy type not yet implemented")
     end
