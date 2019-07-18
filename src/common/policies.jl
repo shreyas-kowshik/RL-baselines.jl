@@ -153,7 +153,7 @@ function test_action(policy,state)
         a = Distributions.sample(1:policy.env_wrap.ACTION_SIZE,Distributions.Weights(action_probs))
     elseif typeof(policy) <: DiagonalGaussianPolicy
         # Use only the mean for prediction
-        a = policy.μ(state)
+        a = policy.μ(state).data
     else
         error("Policy type not yet implemented")
     end

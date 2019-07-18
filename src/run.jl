@@ -54,9 +54,16 @@ function test_run(env)
 	end
 
         OpenAIGym.render(env)
-    a = test_action(policy,s).data
+    a = test_action(policy,s)
     a = convert.(Float64,a)
-    a = reshape(a,env_wrap.ACTION_SIZE)
+
+        if typeof(policy) <: DiagonalGaussianPolicy
+            a = reshape(a,env_wrap.ACTION_SIZE)
+        else
+            # OpanAIGym hack
+            a = a - 1.0f0
+            a = Int64.(a)
+        end
 
 	# a = action(policy,s)
         # s_,r,_ = step!(env,a)
@@ -70,7 +77,12 @@ function test_run(env)
 
         s = s_
         if env.done
-           break 
+           # break 
+           println("---Resetting---")
+           s = OpenAIGym.reset!(env)
+           println(ep_r)
+           ep_r = 0.0
+           continue
         end
     end
     ep_r
