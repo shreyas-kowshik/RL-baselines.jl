@@ -123,7 +123,7 @@ function collect_and_process_rollouts(policy,episode_buffer::Buffer,num_steps::I
     episode_buffer.exp_dict["kl_params"] = copy(kl_params)
     
     # Log the statistics
-    add(stats_buffer,"rollout_returns",mean(hcat(rollout_returns...)))
+    add(stats_buffer,"rollout_returns",mean(hcat(rewards...)))
     
     return nothing
 end
