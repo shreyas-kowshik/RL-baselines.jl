@@ -22,11 +22,11 @@ using JLD
 include("common/policies.jl")
 include("common/utils.jl")
 
-ENV_NAME = "Pendulum-v0"
+ENV_NAME = "CartPole-v0"
 TEST_STEPS = 10000
 global steps_run = 0
 
-LOAD_PATH = "../weights/ppo/Pendulum-v0/"
+LOAD_PATH = "../weights/ppo/CartPole-v0/"
 
 # Define policy
 env_wrap = EnvWrap(ENV_NAME)
