@@ -25,7 +25,7 @@ ENV_NAME = "CartPole-v0"
 env = make(ENV_NAME,:rgb)
 
 # Exploration params
-ϵ = 1.0   # Initial exploration rate
+global ϵ = 1.0   # Initial exploration rate
 ϵ_DECAY = 0.99  # Decay rate for exploration
 ϵ_MIN = 0.02    # Minimum value for exploration
 
@@ -43,7 +43,7 @@ NUM_EPISODES = 100000
 opt = ADAM(η)
 
 # Memory related functions
-MEM_SIZE = 100000
+MEM_SIZE = 1000
 memory = []
 
 function add(s,a,r,s_,done)
@@ -72,12 +72,11 @@ function action(state)
     
     if rand() <= ϵ
         act = rand(1:ACTION_SIZE) 
+        return act
     end
     
-    return act
-    
     Q_values = net(state)
-    act = Flux.argmax(act_values)[1]
+    act = Flux.argmax(Q_values)[1]
     
     return act
 end
@@ -105,6 +104,8 @@ function init_memory()
 end
 
 function episode()
+	global ϵ
+
     s = reset!(env)
     ep_r = 0.0
     
