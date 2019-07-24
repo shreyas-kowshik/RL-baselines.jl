@@ -26,19 +26,19 @@ env = make(ENV_NAME,:rgb)
 
 # Exploration params
 global ϵ = 1.0   # Initial exploration rate
-ϵ_DECAY = 0.99  # Decay rate for exploration
+ϵ_DECAY = 0.995  # Decay rate for exploration
 ϵ_MIN = 0.02    # Minimum value for exploration
 
 # Hyperparams
 SEQ_LENGTH = 8
-BATCH_SIZE = 256
-γ = 0.99f0
+BATCH_SIZE = 100
+γ = 0.95f0
 τ = 50 # Target update frequency
 global update_counter = 0
-NUM_EPISODES = 100000
+NUM_EPISODES = 5000000
 
 # Optimiser params
-η = 0.01f0   # Learning rate
+η = 0.001f0   # Learning rate
 
 opt = ADAM(η)
 
@@ -62,8 +62,8 @@ end
 STATE_SIZE = 4
 ACTION_SIZE = 2
 
-global net = Chain(Dense(STATE_SIZE,30,tanh),Dense(30,50,tanh),LSTM(50,100),
-            Dense(100,ACTION_SIZE))
+global net = Chain(Dense(STATE_SIZE,30,relu;initW=_random_normal), LSTM(30,50),
+            Dense(50,ACTION_SIZE;initW=_random_normal))
 
 global target_net = deepcopy(net)
 
@@ -72,6 +72,7 @@ function action(state)
     
     if rand() <= ϵ
         act = rand(1:ACTION_SIZE) 
+        println("Random Action Taken")
         return act
     end
     
@@ -121,6 +122,10 @@ function episode()
         
         ϵ *= ϵ > ϵ_MIN ? ϵ_DECAY : 1.0f0
         
+        if ϵ > ϵ_MIN
+        	println("ϵ : $ϵ")
+        end
+
         if env.done
             break
         end
@@ -143,14 +148,18 @@ function loss(states,next_states,rewards,actions)
     end
     
     # Pseudo-Huber Loss function
-    mean(sqrt.(1.0f0 .+ (Q_s .- target).^2) .- 1.0f0)
+    # mean(sqrt.(1.0f0 .+ (Q_s .- target).^2) .- 1.0f0)
+    println(mean((Q_s .- target).^2).data)
+    l = mean((Q_s .- target).^2)
+    # Flux.truncate!(net)
+    return l
 end
 
 function train_step()
     global net,target_net,update_counter
     # Reset the hidden layer of the network #
-    Flux.reset!(net.layers[3])
-    Flux.reset!(target_net.layers[3])
+    Flux.reset!(net.layers[2])
+    Flux.reset!(target_net.layers[2])
     
     idx = Distributions.sample(1:MEM_SIZE,BATCH_SIZE,replace=false)
     
@@ -172,11 +181,17 @@ function train_step()
             end
         end
         
+        # TODO : remove
+        # experience = memory[i]
+
         # Temporary Hack
         if length(experience) < SEQ_LENGTH
             continue
         end
         
+        # println(length(experience))
+        # println(length(experience[1]))
+
         push!(mb_states,[exp[1] for exp in experience]...)
         push!(mb_next_states,[exp[4] for exp in experience]...)
         push!(mb_rewards,[exp[3] for exp in experience]...)
@@ -190,12 +205,18 @@ function train_step()
     rewards = collect(partition(Flux.batchseq(Flux.chunk(mb_rewards,chunk_size), -1.0f0), SEQ_LENGTH))[1][end]
     actions = collect(partition(Flux.batchseq(Flux.chunk(mb_actions,chunk_size), -1), SEQ_LENGTH))[1][end]
 
+    # states = hcat(states...)
+    # println(size(states))
+    # println(size(states[1]))
+
     # Compute loss and gradients #
     gs = Tracker.gradient(() -> loss(states,next_states,rewards,actions),params(net))
     
     # Take a update step
     update!(opt,params(net),gs)
     
+    println(mean(net.layers[2].cell.Wi))
+
     if update_counter % τ == 0
         # Copy parameters onto target network
         target_net = deepcopy(net)
