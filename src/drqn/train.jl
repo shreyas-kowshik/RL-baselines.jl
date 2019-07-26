@@ -30,8 +30,8 @@ global ϵ = 1.0   # Initial exploration rate
 ϵ_MIN = 0.02    # Minimum value for exploration
 
 # Hyperparams
-SEQ_LENGTH = 8
-BATCH_SIZE = 100
+SEQ_LENGTH = 1 
+BATCH_SIZE = 256
 γ = 0.95f0
 τ = 50 # Target update frequency
 global update_counter = 0
@@ -62,7 +62,7 @@ end
 STATE_SIZE = 4
 ACTION_SIZE = 2
 
-global net = Chain(Dense(STATE_SIZE,30,relu;initW=_random_normal), LSTM(30,50),
+global net = Chain(Dense(STATE_SIZE,30,relu;initW=_random_normal), Dense(30,50,relu;initW=_random_normal), # LSTM(30,50),
             Dense(50,ACTION_SIZE;initW=_random_normal))
 
 global target_net = deepcopy(net)
@@ -147,9 +147,11 @@ function loss(states,next_states,rewards,actions)
         target[actions[i],i] = rewards[i] + γ * Q_target[max_action,i].data
     end
     
+    println(target[1])
+
     # Pseudo-Huber Loss function
     # mean(sqrt.(1.0f0 .+ (Q_s .- target).^2) .- 1.0f0)
-    println(mean((Q_s .- target).^2).data)
+    # println(mean((Q_s .- target).^2).data)
     l = mean((Q_s .- target).^2)
     # Flux.truncate!(net)
     return l
@@ -215,7 +217,7 @@ function train_step()
     # Take a update step
     update!(opt,params(net),gs)
     
-    println(mean(net.layers[2].cell.Wi))
+    # println(mean(net.layers[2].cell.Wi))
 
     if update_counter % τ == 0
         # Copy parameters onto target network
